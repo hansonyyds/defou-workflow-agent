@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -19,8 +19,8 @@ if (fs.existsSync(envPath)) {
 
 dotenv.config({ path: envPath, override: true });
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const ANTHROPIC_BASE_URL = process.env.ANTHROPIC_BASE_URL;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL;
 const MOCK_MODE = process.env.MOCK_MODE === 'true';
 
 // 2. Define Output Paths
@@ -42,10 +42,10 @@ interface HotItem {
 
 const TOPHUB_URL = 'https://tophub.today/hot';
 
-// 3. Initialize Anthropic Client
-const anthropic = new Anthropic({
-  apiKey: ANTHROPIC_API_KEY || 'dummy',
-  baseURL: ANTHROPIC_BASE_URL,
+// 3. Initialize OpenAI Client
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY || 'dummy',
+  baseURL: OPENAI_BASE_URL,
 });
 
 /**
@@ -98,11 +98,11 @@ export async function fetchHotList(): Promise<HotItem[]> {
 }
 
 /**
- * Analyze the list using Claude
+ * Analyze the list using OpenAI
  */
 export async function analyzeHotList(items: HotItem[]): Promise<string> {
   const topItems = items.slice(0, 30); // Analyze top 30 items
-  const itemsText = topItems.map(item => 
+  const itemsText = topItems.map(item =>
     `${item.rank}. [${item.source}] ${item.title} (Hot: ${item.hot}) - Link: ${item.link}`
   ).join('\n');
 
@@ -122,23 +122,23 @@ For the suggestions, use this format:
 - **Why it works**: [Brief explanation of traffic potential]
 `;
 
-  console.log('🤖 Analyzing hot list with Claude...');
-  
+  console.log('🤖 Analyzing hot list with OpenAI...');
+
   if (MOCK_MODE) {
     return `# Mock Analysis\n\n- Mock Suggestion 1\n- Mock Suggestion 2`;
   }
 
-  const msg = await anthropic.messages.create({
-    model: "anthropic/claude-sonnet-4",
-    max_tokens: 4000,
+  const msg = await openai.chat.completions.create({
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    max_tokens: 2000,
     temperature: 0.7,
-    system: "You are an expert content strategist and trend analyst.",
     messages: [
+      { role: "system", content: "You are an expert content strategist and trend analyst." },
       { role: "user", content: prompt }
     ]
   });
 
-  return (msg.content[0] as any).text;
+  return msg.choices[0].message.content || '';
 }
 
 /**
