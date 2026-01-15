@@ -1,63 +1,45 @@
-import dotenv from 'dotenv';
-import path from 'path';
-import fetch from 'node-fetch'; // We might need to install this or use built-in if node version is high enough. Using https for node 18+
+import fetch from 'node-fetch';
+import { CONFIG } from './config';
+import OpenAI from 'openai';
 
-// Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
-
-const API_KEY = process.env.ANTHROPIC_API_KEY;
-const BASE_URL = process.env.ANTHROPIC_BASE_URL; // e.g. https://zenmux.ai/api/anthropic
-
-console.log('🔍 Starting API Diagnostics...');
-console.log(`🔑 Key length: ${API_KEY?.length}`);
-console.log(`🌐 Base URL: ${BASE_URL}`);
-
-const payload = {
-  model: "anthropic/claude-sonnet-4",
-  max_tokens: 10,
-  messages: [{ role: "user", content: "Hi" }]
-};
-
-async function testUrl(url: string) {
-  console.log(`\nTesting Endpoint: ${url}`);
+async function testUrl(url: string): Promise<boolean> {
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'x-api-key': API_KEY || '',
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const text = await response.text();
-    console.log(`👉 Status: ${response.status}`);
-    console.log(`👉 Response: ${text.substring(0, 200)}...`);
-    
-    if (response.status === 200) {
-      console.log('✅ SUCCESS! This is the correct URL.');
-      return true;
-    }
-  } catch (error: any) {
-    console.log(`❌ Network Error: ${error.message}`);
+    const client = new OpenAI({ baseURL: url });
+    // 尝试列出模型（最轻量的测试）
+    await client.models.list();
+    return true;
+  } catch (error) {
+    return false;
   }
-  return false;
 }
 
 async function run() {
-  if (!BASE_URL) return;
+  console.log('🔍 OpenAI API 连接诊断\n');
 
-  // Scenario 1: SDK adds /messages automatically. Let's try what SDK does.
-  // If base is .../anthropic, SDK likely hits .../anthropic/messages
-  await testUrl(`${BASE_URL}/messages`);
+  const baseUrl = CONFIG.OPENAI_BASE_URL;
+  const apiKey = CONFIG.OPENAI_API_KEY;
 
-  // Scenario 2: Maybe it needs /v1/messages
-  await testUrl(`${BASE_URL}/v1/messages`);
+  console.log(`Base URL: ${baseUrl}`);
+  console.log(`API Key: ${apiKey ? '已配置 (' + apiKey.slice(0, 10) + '...)' : '❌ 未配置'}`);
 
-  // Scenario 3: Maybe the user provided URL ALREADY has /v1 implied?
-  // Try removing /api/anthropic and adding /v1 (Standard OpenAI/OneAPI style)
-  // But user said specifically /api/anthropic. 
+  if (!apiKey) {
+    console.log('\n⚠️  未配置 API Key，无法测试连接');
+    console.log('请在 .env 文件中设置 OPENAI_API_KEY');
+    return;
+  }
+
+  console.log('\n测试连接中...');
+
+  // 测试基础 URL
+  if (await testUrl(baseUrl)) {
+    console.log(`✅ 连接成功: ${baseUrl}`);
+  } else {
+    console.log(`❌ 连接失败: ${baseUrl}`);
+    console.log('\n可能的原因：');
+    console.log('1. Base URL 配置错误');
+    console.log('2. API Key 无效');
+    console.log('3. 网络连接问题');
+  }
 }
 
-run();
+run().catch(console.error);
