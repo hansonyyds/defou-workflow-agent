@@ -3,7 +3,7 @@ import path from 'path';
 import Anthropic from '@anthropic-ai/sdk';
 import chokidar from 'chokidar';
 import pLimit from 'p-limit';
-import { CONFIG } from './config';
+import { CONFIG, ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL } from './config';
 import { DEFOU_SYSTEM_PROMPT } from './templates';
 
 // Limit concurrency to 2 simultaneous requests to avoid Rate Limits
@@ -11,8 +11,8 @@ const limit = pLimit(2);
 
 // Initialize Anthropic Client
 const anthropic = new Anthropic({
-  apiKey: CONFIG.ANTHROPIC_API_KEY || 'dummy',
-  baseURL: CONFIG.ANTHROPIC_BASE_URL,
+  apiKey: ANTHROPIC_API_KEY || 'dummy',
+  baseURL: ANTHROPIC_BASE_URL,
 });
 
 async function main() {

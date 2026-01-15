@@ -54,3 +54,8 @@ export const CONFIG: AppConfig = {
   ARCHIVE_DIR: path.resolve(__dirname, '../archive'),
   ERRORS_DIR: path.resolve(__dirname, '../errors'),
 };
+
+// TODO: 向后兼容别名 - 将在 index.ts 迁移到 OpenAI SDK 后移除
+// 这些别名用于保持中间状态可编译（Task 2 的临时修复）
+export const ANTHROPIC_API_KEY = CONFIG.OPENAI_API_KEY;
+export const ANTHROPIC_BASE_URL = CONFIG.OPENAI_BASE_URL;
