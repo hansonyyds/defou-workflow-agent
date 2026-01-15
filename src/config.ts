@@ -4,6 +4,12 @@ import path from 'path';
 // Load environment variables from .env file
 dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
 
+// 向后兼容的环境变量读取
+// 优先使用 OpenAI 配置，如果不存在则回退到 Anthropic 配置
+const getEnvWithFallback = (openaiKey: string, anthropicKey: string) => {
+  return process.env[openaiKey] || process.env[anthropicKey];
+};
+
 // 配置接口
 interface AppConfig {
   // OpenAI 配置
@@ -32,24 +38,26 @@ interface AppConfig {
   ERRORS_DIR: string;
 }
 
-// 验证 OpenAI 配置
-if (!process.env.MOCK_MODE && !process.env.OPENAI_API_KEY) {
-  console.warn('⚠️  OPENAI_API_KEY not configured. Running in MOCK_MODE automatically.');
+// 验证配置：检查 OpenAI 或 Anthropic API Key
+const hasApiKey = process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY;
+if (!process.env.MOCK_MODE && !hasApiKey) {
+  console.warn('⚠️  API Key not configured (OPENAI_API_KEY or ANTHROPIC_API_KEY). Running in MOCK_MODE automatically.');
   process.env.MOCK_MODE = 'true';
 }
 
 export const CONFIG: AppConfig = {
   // OpenAI 配置
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+  OPENAI_API_KEY: getEnvWithFallback('OPENAI_API_KEY', 'ANTHROPIC_API_KEY'),
+  OPENAI_BASE_URL: getEnvWithFallback('OPENAI_BASE_URL', 'ANTHROPIC_BASE_URL') || 'https://api.openai.com/v1',
   OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',
   OPENAI_MODEL_COMBO: process.env.OPENAI_MODEL_COMBO,
   OPENAI_MODEL_VERIFY: process.env.OPENAI_MODEL_VERIFY,
   OPENAI_MODEL_LIST: process.env.OPENAI_MODEL_LIST,
 
   // TODO: 临时向后兼容属性 - 将在 index.ts 迁移后移除（Task 4）
-  ANTHROPIC_API_KEY: process.env.OPENAI_API_KEY,
-  ANTHROPIC_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+  // 使用相同的兼容性读取逻辑
+  ANTHROPIC_API_KEY: getEnvWithFallback('OPENAI_API_KEY', 'ANTHROPIC_API_KEY'),
+  ANTHROPIC_BASE_URL: getEnvWithFallback('OPENAI_BASE_URL', 'ANTHROPIC_BASE_URL') || 'https://api.openai.com/v1',
 
   // 测试模式
   MOCK_MODE: process.env.MOCK_MODE === 'true',
