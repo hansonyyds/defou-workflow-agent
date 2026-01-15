@@ -49,7 +49,7 @@
 
 ### 前置要求
 - Node.js (v16 或更高版本)
-- Anthropic API Key (用于驱动 Claude 模型)
+- OpenAI API Key (或兼容的 API Key)
 
 ### 安装依赖
 
@@ -57,19 +57,34 @@
 npm install
 ```
 
-### 配置环境
-在项目根目录下创建 `.env` 文件，配置如下信息：
+## 环境配置
+
+创建 `.env` 文件：
 
 ```env
-# Claude API Key (必须)
-ANTHROPIC_API_KEY=sk-ant-api03-...
+# OpenAI 配置
+OPENAI_API_KEY=sk-your-openai-key-here
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4o-mini
 
-# API Base URL (可选，默认为官方接口)
-ANTHROPIC_BASE_URL=https://api.anthropic.com/v1
+# 技能级别模型配置（可选）
+OPENAI_MODEL_COMBO=gpt-4o
+OPENAI_MODEL_VERIFY=gpt-4o-mini
+OPENAI_MODEL_LIST=gpt-4o-mini
 
-# 测试模式 (可选，设为 true 时不消耗 Token，返回模拟数据)
+# Mock 模式（用于测试）
 MOCK_MODE=false
 ```
+
+### 兼容的 AI 提供商
+
+本项目使用 OpenAI SDK，支持任何 OpenAI 兼容端点：
+
+- **OpenAI 官方**: `https://api.openai.com/v1`
+- **Azure OpenAI**: 你的 Azure 端点
+- **DeepSeek**: `https://api.deepseek.com/v1`
+- **Moonshot**: `https://api.moonshot.cn/v1`
+- **其他**: 任何支持 OpenAI API 格式的端点
 
 ## 🚀 使用指南
 
