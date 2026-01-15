@@ -4,9 +4,48 @@ import path from 'path';
 // Load environment variables from .env file
 dotenv.config({ path: path.resolve(__dirname, '../.env'), override: true });
 
-export const CONFIG = {
-  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-  ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL,
+// 配置接口
+interface AppConfig {
+  // OpenAI 配置
+  OPENAI_API_KEY?: string;
+  OPENAI_BASE_URL: string;
+  OPENAI_MODEL: string;
+  OPENAI_MODEL_COMBO?: string;
+  OPENAI_MODEL_VERIFY?: string;
+  OPENAI_MODEL_LIST?: string;
+
+  // 测试模式
+  MOCK_MODE: boolean;
+
+  // 路径配置
+  INPUT_DIR: string;
+  OUTPUT_DIR: string;
+  OUTPUT_ARTICLES_DIR: string;
+  OUTPUT_TRENDS_DIR: string;
+  PROCESSING_DIR: string;
+  ARCHIVE_DIR: string;
+  ERRORS_DIR: string;
+}
+
+// 验证 OpenAI 配置
+if (!process.env.MOCK_MODE && !process.env.OPENAI_API_KEY) {
+  console.warn('⚠️  OPENAI_API_KEY not configured. Running in MOCK_MODE automatically.');
+  process.env.MOCK_MODE = 'true';
+}
+
+export const CONFIG: AppConfig = {
+  // OpenAI 配置
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+  OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+  OPENAI_MODEL_COMBO: process.env.OPENAI_MODEL_COMBO,
+  OPENAI_MODEL_VERIFY: process.env.OPENAI_MODEL_VERIFY,
+  OPENAI_MODEL_LIST: process.env.OPENAI_MODEL_LIST,
+
+  // 测试模式
+  MOCK_MODE: process.env.MOCK_MODE === 'true',
+
+  // 路径配置
   INPUT_DIR: path.resolve(__dirname, '../inputs'),
   OUTPUT_DIR: path.resolve(__dirname, '../outputs'),
   OUTPUT_ARTICLES_DIR: path.resolve(__dirname, '../outputs/articles'),
@@ -14,11 +53,4 @@ export const CONFIG = {
   PROCESSING_DIR: path.resolve(__dirname, '../processing'),
   ARCHIVE_DIR: path.resolve(__dirname, '../archive'),
   ERRORS_DIR: path.resolve(__dirname, '../errors'),
-  // If true, uses a dummy response instead of calling the API (to save credits/testing)
-  MOCK_MODE: process.env.MOCK_MODE === 'true'
 };
-
-if (!CONFIG.ANTHROPIC_API_KEY && !CONFIG.MOCK_MODE) {
-  console.warn("⚠️  Warning: ANTHROPIC_API_KEY is missing in .env file.");
-  console.warn("   You can still run in Mock Mode by setting MOCK_MODE=true in .env");
-}
