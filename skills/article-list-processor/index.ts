@@ -1,13 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import pLimit from 'p-limit';
 import fetch from 'node-fetch';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import chokidar from 'chokidar';
 import { spawn } from 'child_process';
+import { DEFOU_SYSTEM_PROMPT } from '../../src/templates';
 
 // 1. Load Environment Variables
 const projectRoot = path.resolve(__dirname, '../../');
@@ -22,8 +23,8 @@ if (fs.existsSync(envPath)) {
 
 dotenv.config({ path: envPath, override: true });
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const ANTHROPIC_BASE_URL = process.env.ANTHROPIC_BASE_URL;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL;
 const MOCK_MODE = process.env.MOCK_MODE === 'true';
 
 // 2. Define Directories
@@ -36,10 +37,10 @@ const ARCHIVE_DIR = path.join(projectRoot, 'archive');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
-// 3. Initialize Anthropic Client
-const anthropic = new Anthropic({
-  apiKey: ANTHROPIC_API_KEY || 'dummy',
-  baseURL: ANTHROPIC_BASE_URL,
+// 3. Initialize OpenAI Client
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY || 'dummy',
+  baseURL: OPENAI_BASE_URL,
 });
 
 interface ArticleItem {
@@ -116,13 +117,15 @@ async function generateContent(articleTitle: string, articleContent: string, sou
     return `# Mock Content for ${articleTitle}\n\nGenerated in Mock Mode.`;
   }
 
+  const model = process.env.OPENAI_MODEL_LIST || process.env.OPENAI_MODEL || "gpt-4o-mini";
+
   const prompt = `
 You are "Defou x Stanley", a top-tier content expert.
 
 **Task**: Rewrite the following article into a viral "Defou x Stanley" style post.
 
 **Source Article Title**: ${articleTitle}
-**Source Article Content**: 
+**Source Article Content**:
 ${articleContent.slice(0, 8000)}... (truncated)
 
 **Style Requirements**:
@@ -176,17 +179,17 @@ ${articleContent.slice(0, 8000)}... (truncated)
 * **Reason**: [Reason]
 `;
 
-  const msg = await anthropic.messages.create({
-    model: "anthropic/claude-sonnet-4",
+  const msg = await openai.chat.completions.create({
+    model,
     max_tokens: 4000,
     temperature: 0.7,
-    system: "You are Defou x Stanley, a viral content expert.",
     messages: [
+      { role: "system", content: DEFOU_SYSTEM_PROMPT },
       { role: "user", content: prompt }
     ]
   });
 
-  return (msg.content[0] as any).text;
+  return msg.choices[0]?.message?.content || '';
 }
 
 /**
