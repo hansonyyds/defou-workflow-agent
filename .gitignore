@@ -29,3 +29,6 @@ local_inputs/
 .vscode/
 .idea/
 .history/
+
+# docs
+docs
