@@ -105,11 +105,98 @@ async function fetchHotList(): Promise<HotItem[]> {
 }
 
 /**
+ * Extract JSON from AI response that may contain markdown code blocks or extra text
+ */
+function extractJsonFromResponse(content: string): string | null {
+  if (!content || content.trim().length === 0) {
+    return null;
+  }
+
+  const trimmed = content.trim();
+
+  // Strategy 1: Try parsing as-is (pure JSON)
+  try {
+    JSON.parse(trimmed);
+    return trimmed;
+  } catch {
+    // Not pure JSON, continue to other strategies
+  }
+
+  // Strategy 2: Extract from markdown code block (```json ... ``` or ``` ... ```)
+  const codeBlockMatch = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (codeBlockMatch) {
+    const extracted = codeBlockMatch[1].trim();
+    try {
+      JSON.parse(extracted);
+      return extracted;
+    } catch {
+      // Invalid JSON in code block, continue
+    }
+  }
+
+  // Strategy 3: Find JSON object using balanced brace matching
+  // This handles cases where AI wraps JSON in explanatory text
+  let braceCount = 0;
+  let startIndex = -1;
+  let inString = false;
+  let escapeNext = false;
+
+  for (let i = 0; i < trimmed.length; i++) {
+    const char = trimmed[i];
+
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (!inString) {
+      if (char === '{' && braceCount === 0) {
+        startIndex = i;
+      }
+      if (char === '{' || char === '[') {
+        braceCount++;
+      } else if (char === '}' || char === ']') {
+        braceCount--;
+        if (braceCount === 0 && startIndex >= 0) {
+          const extracted = trimmed.substring(startIndex, i + 1);
+          try {
+            JSON.parse(extracted);
+            return extracted;
+          } catch {
+            // Invalid JSON, reset and continue
+            braceCount = 0;
+            startIndex = -1;
+          }
+        }
+      }
+    }
+  }
+
+  // Strategy 4: Last resort - simple regex (original behavior)
+  const simpleMatch = trimmed.match(/\{[\s\S]*\}/);
+  if (simpleMatch) {
+    return simpleMatch[0];
+  }
+
+  return null;
+}
+
+/**
  * Step 1: Select the top 10 best topics
  */
 async function selectBestTopics(items: HotItem[]): Promise<Topic[]> {
   const topItems = items.slice(0, 50); // Analyze top 50 to find the best 10
-  const itemsText = topItems.map(item => 
+  const itemsText = topItems.map(item =>
     `${item.rank}. [${item.source}] ${item.title} (Hot: ${item.hot})`
   ).join('\n');
 
@@ -148,7 +235,7 @@ Return your selection in JSON format as an array of objects:
   const model = process.env.OPENAI_MODEL_COMBO || process.env.OPENAI_MODEL || "gpt-4o-mini";
   const response = await openai.chat.completions.create({
     model,
-    max_tokens: 2000,
+    max_tokens: 4000,  // Increased from 2000 to handle 10 topics with detailed reasons
     temperature: 0.7,
     messages: [
       { role: "system", content: "You are a content scout." },
@@ -157,19 +244,36 @@ Return your selection in JSON format as an array of objects:
   });
 
   const content = response.choices[0].message.content || '';
-  
-  // Extract JSON from response
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
+
+  // Extract JSON from response using robust multi-strategy approach
+  const extractedJson = extractJsonFromResponse(content);
+  if (!extractedJson) {
+    console.error('❌ Failed to extract JSON from AI response');
+    console.error('📝 Raw response:', content);
     throw new Error("Failed to parse JSON from selection response");
   }
-  
-  const selectionData = JSON.parse(jsonMatch[0]);
+
+  let selectionData;
+  try {
+    selectionData = JSON.parse(extractedJson);
+  } catch (error) {
+    console.error('❌ Failed to parse extracted JSON');
+    console.error('📝 Extracted JSON:', extractedJson);
+    console.error('📝 Raw response:', content);
+    throw error;
+  }
+
   const selectedTopics: Topic[] = [];
 
   if (selectionData.topics && Array.isArray(selectionData.topics)) {
       for (const t of selectionData.topics) {
-          const originalItem = topItems.find(i => i.rank === t.rank);
+          // Handle both string and number rank formats
+          const searchRank = String(t.rank).trim();
+          const originalItem = topItems.find(i => {
+              const itemRank = String(i.rank).trim();
+              return itemRank === searchRank;
+          });
+
           if (originalItem) {
               selectedTopics.push({
                   title: originalItem.title,
@@ -177,6 +281,9 @@ Return your selection in JSON format as an array of objects:
                   source: originalItem.source,
                   link: originalItem.link
               });
+          } else {
+              // Debug: log failed rank matches
+              console.warn(`⚠️  Rank "${searchRank}" not found in topItems`);
           }
       }
   }
