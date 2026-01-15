@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { CONFIG } from './config';
 import OpenAI from 'openai';
 
