@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -19,8 +19,8 @@ if (fs.existsSync(envPath)) {
 
 dotenv.config({ path: envPath, override: true });
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const ANTHROPIC_BASE_URL = process.env.ANTHROPIC_BASE_URL;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL;
 const MOCK_MODE = process.env.MOCK_MODE === 'true';
 
 // 2. Define Output Paths
@@ -49,10 +49,10 @@ interface Topic {
 
 const TOPHUB_URL = 'https://tophub.today/hot';
 
-// 3. Initialize Anthropic Client
-const anthropic = new Anthropic({
-  apiKey: ANTHROPIC_API_KEY || 'dummy',
-  baseURL: ANTHROPIC_BASE_URL,
+// 3. Initialize OpenAI Client
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY || 'dummy',
+  baseURL: OPENAI_BASE_URL,
 });
 
 /**
@@ -145,17 +145,18 @@ Return your selection in JSON format as an array of objects:
     }));
   }
 
-  const msg = await anthropic.messages.create({
-    model: "anthropic/claude-sonnet-4",
+  const model = process.env.OPENAI_MODEL_COMBO || process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const response = await openai.chat.completions.create({
+    model,
     max_tokens: 2000,
     temperature: 0.7,
-    system: "You are a content scout.",
     messages: [
+      { role: "system", content: "You are a content scout." },
       { role: "user", content: prompt }
     ]
   });
 
-  const content = (msg.content[0] as any).text;
+  const content = response.choices[0].message.content || '';
   
   // Extract JSON from response
   const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -289,17 +290,18 @@ Please create a content piece following the **Defou x Stanley Workflow**.
 
   console.log(`🤖 Generating content for topic: "${topic.title}"...`);
 
-  const msg = await anthropic.messages.create({
-    model: "anthropic/claude-sonnet-4",
+  const model = process.env.OPENAI_MODEL_COMBO || process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const response = await openai.chat.completions.create({
+    model,
     max_tokens: 4000,
     temperature: 0.7,
-    system: "You are Defou x Stanley, a viral content expert.",
     messages: [
+      { role: "system", content: "You are Defou x Stanley, a viral content expert." },
       { role: "user", content: prompt }
     ]
   });
 
-  return (msg.content[0] as any).text;
+  return response.choices[0].message.content || '';
 }
 
 /**
