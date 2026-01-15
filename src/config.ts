@@ -14,6 +14,11 @@ interface AppConfig {
   OPENAI_MODEL_VERIFY?: string;
   OPENAI_MODEL_LIST?: string;
 
+  // TODO: 临时向后兼容属性 - 将在 index.ts 迁移后移除（Task 4）
+  // 这些属性指向 OpenAI 配置，保持中间状态可编译
+  ANTHROPIC_API_KEY?: string;
+  ANTHROPIC_BASE_URL?: string;
+
   // 测试模式
   MOCK_MODE: boolean;
 
@@ -42,6 +47,10 @@ export const CONFIG: AppConfig = {
   OPENAI_MODEL_VERIFY: process.env.OPENAI_MODEL_VERIFY,
   OPENAI_MODEL_LIST: process.env.OPENAI_MODEL_LIST,
 
+  // TODO: 临时向后兼容属性 - 将在 index.ts 迁移后移除（Task 4）
+  ANTHROPIC_API_KEY: process.env.OPENAI_API_KEY,
+  ANTHROPIC_BASE_URL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+
   // 测试模式
   MOCK_MODE: process.env.MOCK_MODE === 'true',
 
@@ -54,8 +63,3 @@ export const CONFIG: AppConfig = {
   ARCHIVE_DIR: path.resolve(__dirname, '../archive'),
   ERRORS_DIR: path.resolve(__dirname, '../errors'),
 };
-
-// TODO: 向后兼容别名 - 将在 index.ts 迁移到 OpenAI SDK 后移除
-// 这些别名用于保持中间状态可编译（Task 2 的临时修复）
-export const ANTHROPIC_API_KEY = CONFIG.OPENAI_API_KEY;
-export const ANTHROPIC_BASE_URL = CONFIG.OPENAI_BASE_URL;
