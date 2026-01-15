@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import chokidar from 'chokidar';
 import pLimit from 'p-limit';
 import { CONFIG } from './config';
@@ -9,10 +9,10 @@ import { DEFOU_SYSTEM_PROMPT } from './templates';
 // Limit concurrency to 2 simultaneous requests to avoid Rate Limits
 const limit = pLimit(2);
 
-// Initialize Anthropic Client
-const anthropic = new Anthropic({
-  apiKey: CONFIG.ANTHROPIC_API_KEY || 'dummy',
-  baseURL: CONFIG.ANTHROPIC_BASE_URL,
+// Initialize OpenAI Client
+const openai = new OpenAI({
+  apiKey: CONFIG.OPENAI_API_KEY || 'dummy',
+  baseURL: CONFIG.OPENAI_BASE_URL,
 });
 
 async function main() {
@@ -69,17 +69,17 @@ async function processFile(filePath: string, fileName: string) {
       await new Promise(r => setTimeout(r, 1000)); // Simulate delay
       markdownContent = getMockResult();
     } else {
-      const msg = await anthropic.messages.create({
-        model: "anthropic/claude-sonnet-4",
+      const msg = await openai.chat.completions.create({
+        model: CONFIG.OPENAI_MODEL || "gpt-4o-mini",
         max_tokens: 4000,
         temperature: 0.7,
-        system: DEFOU_SYSTEM_PROMPT,
         messages: [
+          { role: "system", content: DEFOU_SYSTEM_PROMPT },
           { role: "user", content: `Here is the raw content:\n\n${content}` }
         ]
       });
 
-      markdownContent = (msg.content[0] as any).text;
+      markdownContent = msg.choices[0].message.content || '';
     }
 
     // 2. Generate Output with Header

@@ -20,11 +20,6 @@ interface AppConfig {
   OPENAI_MODEL_VERIFY?: string;
   OPENAI_MODEL_LIST?: string;
 
-  // TODO: 临时向后兼容属性 - 将在 index.ts 迁移后移除（Task 4）
-  // 这些属性指向 OpenAI 配置，保持中间状态可编译
-  ANTHROPIC_API_KEY?: string;
-  ANTHROPIC_BASE_URL?: string;
-
   // 测试模式
   MOCK_MODE: boolean;
 
@@ -53,11 +48,6 @@ export const CONFIG: AppConfig = {
   OPENAI_MODEL_COMBO: process.env.OPENAI_MODEL_COMBO,
   OPENAI_MODEL_VERIFY: process.env.OPENAI_MODEL_VERIFY,
   OPENAI_MODEL_LIST: process.env.OPENAI_MODEL_LIST,
-
-  // TODO: 临时向后兼容属性 - 将在 index.ts 迁移后移除（Task 4）
-  // 使用相同的兼容性读取逻辑
-  ANTHROPIC_API_KEY: getEnvWithFallback('OPENAI_API_KEY', 'ANTHROPIC_API_KEY'),
-  ANTHROPIC_BASE_URL: getEnvWithFallback('OPENAI_BASE_URL', 'ANTHROPIC_BASE_URL') || 'https://api.openai.com/v1',
 
   // 测试模式
   MOCK_MODE: process.env.MOCK_MODE === 'true',
