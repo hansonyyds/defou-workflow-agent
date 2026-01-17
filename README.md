@@ -159,7 +159,7 @@ MOCK_MODE=false
    ```bash
    # 验证最新生成的文章
    npm run skill:verify
-   
+
    # 或者验证指定文件
    npm run skill:verify -- outputs/defou-stanley-posts/你的文章.md
    ```
@@ -240,7 +240,7 @@ defou-workflow-agent/
 │   └── diagnose.ts     # API 连接诊断工具
 ├── .claude/             # Claude Code 配置
 │   └── commands/        # 自定义命令
-│       └── defou-skill-command/    # Defou 技能命令
+│       └── defou/    # Defou 技能命令
 │           └── defou-skill-master.md  # /defou-skill-master 命令定义
 ├── skills/             # 技能库
 │   ├── tophub-trends/              # 热榜抓取技能
