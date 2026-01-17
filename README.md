@@ -1,5 +1,19 @@
 # Defou Workflow Agent
 
+<div align="center">
+
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
+![Node.js](https://img.shields.io/badge/Node.js-16+-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+**智能化内容创作工作流代理** — 基于 Defou x Stanley 方法论的 AI 内容生成系统
+
+[功能特性](#-核心功能) • [快速开始](#️-快速开始) • [使用指南](#-使用指南) • [技术细节](#-技术细节)
+
+</div>
+
+---
+
 这是一个智能化的内容创作工作流代理，结合了 Defou 方法论和 AI 能力。它旨在帮助内容创作者自动化地完成从"灵感获取"到"内容重塑"再到"爆款验证"的全过程。
 
 ## ✨ 核心功能
@@ -36,8 +50,6 @@
 - **🩺 深度诊断**：基于6大爆款要素（好奇心、情绪、价值、时效、节奏、新颖性）进行评分。
 - **📈 增长黑客**：模拟资深运营专家，给出具体的优化建议。
 - **🚀 自动重写**：不仅指出问题，还会自动重写一个优化后的高潜力版本。
-
-## 🛠️ 快速开始
 
 ### 5. 👑 全自动总指挥 (Master Orchestrator)
 一键启动全流程的终极技能。
@@ -191,29 +203,60 @@ MOCK_MODE=false
    - 系统将自动串联执行 `skill:combo` 和 `skill:verify`。
    - 你只需等待几分钟，然后去 `outputs/viral-verified-posts/` 目录下收取最终成品。
 
+### 场景七：🤖 Claude Code 命令 (Claude Code CLI)
+
+如果你正在使用 Claude Code CLI，可以通过内置命令直接调用：
+
+```bash
+# 在 Claude Code 对话中直接输入
+/defou-skill-master
+```
+
+该命令会自动执行完整的 Defou 工作流，无需手动运行 npm 脚本。
+
+**优势**：
+- 无需切换终端窗口
+- 与 Claude Code 的 AI 助手无缝集成
+- 可在对话上下文中直接查看执行结果
+
 ## 📂 项目结构
 
 ```
 defou-workflow-agent/
 ├── inputs/             # [入口] 这里的文稿会被自动处理
+├── local_inputs/       # [批量入口] 批量文章链接监听目录
 ├── outputs/            # [出口]
 │   ├── articles/       # AI 重塑后的文章报告
 │   ├── trends/         # 热榜分析报告
 │   ├── defou-stanley-posts/ # 自动生成的爆款文章
 │   └── viral-verified-posts/ # 经过验证优化的最终稿件
 ├── archive/            # [归档] 处理完的源文件移入此处
-├── src/
-│   ├── index.ts        # 核心监听代理逻辑
-│   ├── master.ts       # [新增] 总指挥调度脚本
-│   ├── templates.ts    # Prompt 提示词
-│   └── config.ts       # 环境配置
+├── errors/             # [错误] 处理失败时移入此处
+├── src/                # 核心引擎
+│   ├── index.ts        # 主监听代理逻辑
+│   ├── master.ts       # 总指挥调度脚本
+│   ├── templates.ts    # Defou x Stanley 提示词模板
+│   ├── config.ts       # 环境配置
+│   └── diagnose.ts     # API 连接诊断工具
+├── .claude/             # Claude Code 配置
+│   └── commands/        # 自定义命令
+│       └── defou-skill-command/    # Defou 技能命令
+│           └── defou-skill-master.md  # /defou-skill-master 命令定义
 ├── skills/             # 技能库
 │   ├── tophub-trends/              # 热榜抓取技能
 │   ├── tophub-defou-stanley-combo/ # 自动创作组合技能
-│   └── viral-verification/         # 爆款验证技能
-│       ├── SKILL.md                # 验证标准与 Prompt (可修改)
-│       └── index.ts                # 执行脚本
-└── .env                # 配置文件
+│   ├── viral-verification/         # 爆款验证技能
+│   ├── article-list-processor/     # 批量文章链接处理
+│   ├── master-orchestrator/        # 总指挥编排技能
+│   ├── defou-workflow/             # Defou 风格提示词定义
+│   └── defou-stanley-workflow/     # Defou x Stanley 融合提示词
+│       └── SKILL.md                # 技能说明文件 (可修改)
+├── .env                # 配置文件
+├── .env.example        # 配置文件示例
+├── package.json        # 依赖管理
+├── tsconfig.json       # TypeScript 配置
+├── CLAUDE.md           # AI 上下文文档
+└── README.md           # 项目说明文档
 ```
 
 ## ⚡️ TL;DR (极简版)
@@ -229,7 +272,10 @@ npm install
 
 # --- 常用指令 ---
 
-# [🔥 推荐] 模式 E: 一键全自动 (生成 + 验证)
+# [🔥 推荐] Claude Code 命令：一键全自动 (生成 + 验证)
+/defou-skill-master
+
+# 或使用终端命令：
 npm run skill:master
 
 # 模式 A: 启动自动监听 (处理 inputs/ 下的草稿)
@@ -244,6 +290,73 @@ npm run skill:combo
 # 模式 D: 爆款验证与优化 (为生成的内容做最后体检)
 npm run skill:verify
 
-# 模式 E: 批量处理文章链接 (启动监听 -> 投放清单 -> 自动生成+验证)
+# 模式 F: 批量处理文章链接 (启动监听 -> 投放清单 -> 自动生成+验证)
 npm run skill:list
+
+# 构建项目
+npm run build
 ```
+
+## 🔧 技术细节
+
+### 技术栈
+- **运行时**: Node.js (v16+)
+- **语言**: TypeScript 5.7
+- **AI模型**: OpenAI 兼容 API (默认 gpt-4o-mini)
+- **网页抓取**: Cheerio, JSDOM, @mozilla/readability
+- **文件监听**: Chokidar
+- **并发控制**: p-limit
+
+### 代码风格
+- 所有输出内容使用简体中文
+- 使用 `async/await` 处理异步操作
+- 使用 `p-limit` 限制并发请求数（默认为 2）
+- 使用 `try-catch` 包裹可能失败的操作
+- 使用 `path.resolve()` 和 `path.join()` 处理跨平台路径
+
+### Defou x Stanley 方法论
+
+#### 智能路由系统 (T1-T4)
+- **T1-热点模板**: 追逐流量，时效性强
+- **T2-反鸡汤模板**: 挑战共识，制造争议
+- **T3-吐槽模板**: 情绪共鸣，群体认同
+- **T4-干货模板**: 价值输出，认知升级
+
+#### 三版本生成
+- **版本 A (Stanley Style)**: 极致爆款、情绪共鸣、金句频出
+- **版本 B (Defou Style)**: 深度认知、底层逻辑、长期价值
+- **版本 C (Combo Style)**: 传播力与深度结合的终极版本
+
+#### 评分系统
+基于四大维度评估内容潜力：
+1. **好奇心** (1-10): 吸引注意力的能力
+2. **共鸣度** (1-10): 情感连接强度
+3. **清晰度** (1-10): 表达的准确性
+4. **转发价值** (1-10): 传播驱动因素
+
+## ⚠️ 已知限制
+
+1. **无自动化测试**: 当前依赖手动测试和 Mock 模式
+2. **错误处理**: 部分网络错误可能导致流程中断
+3. **并发限制**: 固定为 2，暂未配置化
+4. **硬编码路径**: 部分路径硬编码在技能文件中
+5. **无日志系统**: 仅使用 console.log，缺乏结构化日志
+6. **无性能监控**: 缺少执行时间、Token 消耗等指标收集
+
+## 🚧 未来迭代方向
+
+详见 `PROJECT_OPTIMIZATION.md`，包括：
+- 数据源拓展（Hacker News, Product Hunt, 抖音热搜等）
+- 风格提炼系统（支持自定义博主风格）
+- 案例库迭代（动态案例库和金句仓库）
+- 模板进化（T5-T7 等更高维度的内容模板）
+- 自动化闭环（A/B 测试自动化、评分系统升级）
+
+## 📄 许可证
+
+MIT License
+
+---
+
+**提示**: 首次使用建议运行 Mock 模式 (`MOCK_MODE=true`) 测试流程，避免消耗 API Token。
+
