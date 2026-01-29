@@ -5,11 +5,11 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "skill:tophub": "export NODE_PATH=./node_modules && ts-node --project tsconfig.json ./skills/tophub-trends/tophub.ts",
-    "skill:combo": "export NODE_PATH=./node_modules && ts-node --project tsconfig.json ./skills/tophub-defou-stanley-combo/index.ts",
-    "skill:verify": "export NODE_PATH=./node_modules && ts-node --project tsconfig.json ./skills/viral-verification/index.ts",
+    "skill:tophub": "cross-env NODE_PATH=./node_modules ts-node --project tsconfig.json ./skills/tophub-trends/tophub.ts",
+    "skill:combo": "cross-env NODE_PATH=./node_modules ts-node --project tsconfig.json ./skills/tophub-defou-stanley-combo/index.ts",
+    "skill:verify": "cross-env NODE_PATH=./node_modules ts-node --project tsconfig.json ./skills/viral-verification/index.ts",
     "skill:master": "ts-node src/master.ts",
-    "skill:list": "export NODE_PATH=./node_modules && ts-node --project tsconfig.json ./skills/article-list-processor/index.ts",
+    "skill:list": "cross-env NODE_PATH=./node_modules ts-node --project tsconfig.json ./skills/article-list-processor/index.ts",
     "build": "tsc"
   },
   "keywords": [],
@@ -30,6 +30,7 @@
     "@types/jsdom": "^27.0.0",
     "@types/node": "^22.10.2",
     "@types/node-fetch": "^2.6.13",
+    "cross-env": "^10.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
   }

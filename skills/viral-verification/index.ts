@@ -45,7 +45,8 @@ function loadPromptFromSkill(): string {
     const content = fs.readFileSync(skillPath, 'utf-8');
     
     // Regex to capture content inside the first markdown code block
-    const match = content.match(/```markdown\n([\s\S]*?)\n```/);
+    // Support both Unix (LF) and Windows (CRLF) line endings
+    const match = content.match(/```markdown\r?\n([\s\S]*?)\r?\n```/);
     if (match && match[1]) {
       return match[1];
     }
